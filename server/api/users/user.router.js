@@ -25,11 +25,13 @@ router.get('/', function (req, res, next) {
 });
 
 router.post('/', function (req, res, next) {
-	User.create(req.body)
-	.then(function (user) {
-		res.status(201).json(user);
-	})
-	.then(null, next);
+	if(req.user.isAdmin) {
+		User.create(req.body)
+		.then(function (user) {
+			res.status(201).json(user);
+		})
+		.then(null, next);
+	}
 });
 
 router.get('/:id', function (req, res, next) {
@@ -43,20 +45,28 @@ router.get('/:id', function (req, res, next) {
 });
 
 router.put('/:id', function (req, res, next) {
-	_.extend(req.requestedUser, req.body);
-	req.requestedUser.save()
-	.then(function (user) {
-		res.json(user);
-	})
-	.then(null, next);
+	if(req.user.isAdmin || req.user._id === req.story.author) {
+		_.extend(req.requestedUser, req.body);
+		req.requestedUser.save()
+		.then(function (user) {
+			res.json(user);
+		})
+		.then(null, next);
+	} else {
+		res.status(401);
+	}
 });
 
 router.delete('/:id', function (req, res, next) {
-	req.requestedUser.remove()
-	.then(function () {
-		res.status(204).end();
-	})
-	.then(null, next);
+	if(req.user.isAdmin || req.user._id === req.params.id) {
+		req.requestedUser.remove()
+		.then(function () {
+			res.status(204).end();
+		})
+		.then(null, next);
+	} else {
+		res.status(401);
+	}
 });
 
 module.exports = router;

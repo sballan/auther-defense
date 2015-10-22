@@ -27,6 +27,7 @@ router.post('/signup', function (req, res, next) {
 });
 
 router.get('/me', function (req, res, next) {
+	console.dir(req.user)
 	res.json(req.user);
 });
 
