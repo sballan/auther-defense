@@ -1,4 +1,4 @@
-'use strict'; 
+'use strict';
 
 var mongoose = require('mongoose'),
 	shortid = require('shortid'),
@@ -6,6 +6,7 @@ var mongoose = require('mongoose'),
 
 var db = require('../../db');
 var Story = require('../stories/story.model');
+var crypto = require('crypto');
 
 var User = new mongoose.Schema({
 	_id: {
@@ -46,8 +47,22 @@ var User = new mongoose.Schema({
 	isAdmin: {
 		type: Boolean,
 		default: false
+	},
+	salt: {
+		type: String,
+		default: crypto.randomBytes(512).toString('base64'),
+		unique: true
 	}
 });
+
+User.pre('save', function(next) {
+	var self = this;
+	crypto.pbkdf2(self.password, self.salt, 32, 1024, function(err, key) {
+		if(err) return next(err)
+		self.password = key;
+		return next();
+	})
+})
 
 User.methods.getStories = function () {
 	return Story.find({author: this._id}).exec();

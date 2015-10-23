@@ -1,20 +1,36 @@
 'use strict';
 
 var router = require('express').Router();
+var crypto = require('crypto');
 
 var HttpError = require('../utils/HttpError');
 var User = require('../api/users/user.model');
 
-router.post('/login', function (req, res, next) {
-	User.findOne(req.body).exec()
-	.then(function (user) {
+router.post('/login', function(req, res, next) {
+	var email = req.body.email
+	var password = req.body.password
+	console.log('----------This is the initial password:', password)
+
+	User.findOne({email: email}).exec()
+	.then(function(user) {
 		if (!user) throw HttpError(401);
-		req.login(user, function () {
-			res.json(user);
-		});
-	})
-	.then(null, next);
-});
+		else {
+			console.log("----------User :", user)
+			crypto.pbkdf2(password, user.salt, 32, 1024, function(err, key) {
+				if (err) return next(err)
+				if (user.password == key) {
+					console.log("----------We had the right password hash ")
+						req.login(user, function() {
+								res.json(user);
+						});
+				} else {
+						throw HttpError(401)
+				}
+			})
+		}
+	});
+})
+
 
 router.post('/signup', function (req, res, next) {
 	User.create(req.body)
