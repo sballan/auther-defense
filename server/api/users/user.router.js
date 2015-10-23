@@ -45,8 +45,10 @@ router.get('/:id', function (req, res, next) {
 });
 
 router.put('/:id', function (req, res, next) {
+	var save = req.requestedUser.save
 	if(req.user.isAdmin || req.user._id === req.story.author) {
 		_.extend(req.requestedUser, req.body);
+		req.requestedUser.save = save;
 		req.requestedUser.save()
 		.then(function (user) {
 			res.json(user);
